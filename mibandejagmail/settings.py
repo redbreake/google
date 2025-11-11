@@ -39,7 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles','gmailbox',
+    'django.contrib.staticfiles',
+    'django_bootstrap5',
+    'gmailbox',
 ]
 
 MIDDLEWARE = [

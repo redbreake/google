@@ -1,34 +1,203 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Mensaje</title>
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 20px; }
-    .meta { color:#666; font-size: 12px; }
-    .card { padding: 16px; border: 1px solid #eee; border-radius: 8px; }
-    .body { margin-top: 12px; }
-    pre { white-space: pre-wrap; }
-  </style>
-</head>
-<body>
-  <a href="/inbox/">← Volver al Inbox</a>
-  <h1>Mensaje</h1>
+{% extends "gmailbox/base.html" %}
+{% load django_bootstrap5 %}
 
-  <div class="card">
-    <div class="meta"><strong>From:</strong> {{ headers.From }}</div>
-    <div class="meta"><strong>To:</strong> {{ headers.To }}</div>
-    <div class="meta"><strong>Date:</strong> {{ headers.Date }}</div>
-    <div class="meta"><strong>Subject:</strong> {{ headers.Subject }}</div>
-    <div class="body">
-      {% if body_html %}
-        <div>{{ body_html|safe }}</div>
-      {% elif body_text %}
-        <pre>{{ body_text }}</pre>
-      {% else %}
-        <em>Sin cuerpo legible.</em>
-      {% endif %}
+{% block title %}Mensaje - {{ headers.Subject|default:"Sin asunto" }}{% endblock %}
+{% block page_title %}Detalle del Mensaje{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Navigation -->
+        <div class="mb-4">
+            <a href="{% url 'inbox' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Volver a Bandeja de Entrada
+            </a>
+        </div>
+
+        <!-- Message Card -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <div class="d-flex align-items-center">
+                    <div class="avatar me-3">
+                        {{ headers.From|slice:":1"|upper }}
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="mb-1">{{ headers.Subject|default:"Sin asunto" }}</h5>
+                        <div class="text-muted small">
+                            <span class="me-3">
+                                <i class="fas fa-user me-1"></i>
+                                {{ headers.From|default:"Remitente desconocido" }}
+                            </span>
+                            <span>
+                                <i class="fas fa-calendar me-1"></i>
+                                {{ headers.Date|default:"Fecha desconocida" }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- Message Headers -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-2">
+                            <strong class="text-muted">De:</strong>
+                            <span>{{ headers.From|default:"No disponible" }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong class="text-muted">Para:</strong>
+                            <span>{{ headers.To|default:"No disponible" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-2">
+                            <strong class="text-muted">Fecha:</strong>
+                            <span>{{ headers.Date|default:"No disponible" }}</span>
+                        </div>
+                        {% if headers.Cc %}
+                            <div class="mb-2">
+                                <strong class="text-muted">CC:</strong>
+                                <span>{{ headers.Cc }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Message Content -->
+                <div class="message-content">
+                    {% if body_html %}
+                        <div class="email-content html-content">
+                            {{ body_html|safe }}
+                        </div>
+                    {% elif body_text %}
+                        <div class="email-content text-content">
+                            <pre class="bg-light p-3 rounded">{{ body_text }}</pre>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
+                            <p class="text-muted mb-0">No se pudo cargar el contenido del mensaje.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Message Actions -->
+            <div class="card-footer bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                            <i class="fas fa-print me-1"></i>
+                            Imprimir
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="copyToClipboard()">
+                            <i class="fas fa-copy me-1"></i>
+                            Copiar
+                        </button>
+                    </div>
+                    <small class="text-muted">
+                        ID del mensaje: {{ id }}
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Info -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-info-circle fa-2x text-info mb-2"></i>
+                        <h6>Información del Mensaje</h6>
+                        <p class="mb-1">ID: <code>{{ id }}</code></p>
+                        <small class="text-muted">Mensaje único de Gmail</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-clock fa-2x text-success mb-2"></i>
+                        <h6>Estado</h6>
+                        <p class="mb-1 text-success">Mensaje leído</p>
+                        <small class="text-muted">Disponible para consulta</small>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyToClipboard() {
+    const text = `Asunto: {{ headers.Subject|default:"Sin asunto" }}\nDe: {{ headers.From|default:"No disponible" }}\nFecha: {{ headers.Date|default:"No disponible" }}\n\n{{ body_text|default:"" }}`;
+    navigator.clipboard.writeText(text).then(function() {
+        // Show success message
+        showToast('Contenido copiado al portapapeles', 'success');
+    }, function(err) {
+        console.error('Error al copiar: ', err);
+        showToast('Error al copiar al portapapeles', 'error');
+    });
+}
+
+function showToast(message, type) {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 3000);
+}
+</script>
+
+<style>
+.email-content {
+    font-family: 'Roboto', Arial, sans-serif;
+    line-height: 1.6;
+}
+
+.html-content {
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+    background: #f8f9fa;
+}
+
+.html-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.text-content pre {
+    font-family: inherit;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+@media (max-width: 768px) {
+    .card-header .d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .avatar {
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
