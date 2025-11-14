@@ -190,8 +190,8 @@
                         <i class="fas fa-inbox me-2"></i>
                         Bandeja de entrada
                     </a>
-                    {% if user.is_authenticated %}
-                    <a class="nav-link" href="#" onclick="logout()">
+                    {% if is_oauth_authenticated %}
+                    <a class="nav-link" href="{% url 'logout' %}">
                         <i class="fas fa-sign-out-alt me-2"></i>
                         Cerrar sesión
                     </a>

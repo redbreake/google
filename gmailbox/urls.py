@@ -9,6 +9,7 @@ urlpatterns = [
     path('inbox/', views.inbox, name='inbox'),
     path('message/<str:msg_id>/', views.message_detail, name='message_detail'),
     # exportación CSV
+    path('logout/', views.logout_view, name='logout'),
     path('inbox/export.csv', views.export_csv, name='export_csv'),
 ]
 

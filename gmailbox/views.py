@@ -43,6 +43,9 @@ def _redirect_uri(request):
     return uri
 
 
+def logout_view(request):
+    request.session.flush()  # Elimina todas las claves de sesión
+    return redirect('home')
 def home(request):
     return redirect("inbox")
 
